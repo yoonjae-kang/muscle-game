@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>근육 키우기 게임</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            background: #f5f5f5;
+        }
+
+        #character-display {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #start-screen h1 {
+            color: white;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        #start-screen p {
+            color: #ddd;
+            font-size: 16px;
+            margin-bottom: 30px;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .start-btn {
+            padding: 15px 40px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #level-display {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 10;
+            display: none;
+        }
+
+        #scenario-box {
+            position: absolute;
+            bottom: 90px;
+            left: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+            display: none;
+        }
+
+        #scenario-text {
+            font-size: 15px;
+            line-height: 1.4;
+            margin-bottom: 8px;
+            color: #000;
+            font-weight: 600;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.9);
+        }
+
+        .choice-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .choice-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            background: rgba(139, 115, 85, 0.7);
+            color: white;
+            font-weight: 500;
+            text-align: left;
+        }
+
+        #stats-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 6px;
+            display: none;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            z-index: 10;
+            height: 70px;
+        }
+
+        .stat-item {
+            text-align: center;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            opacity: 0.8;
+            margin-bottom: 2px;
+        }
+
+        .stat-value {
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin-top: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #4CAF50;
+            transition: width 0.5s;
+        }
+
+        .progress-fill.danger {
+            background: #f44336;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .overlay.show {
+            display: flex;
+        }
+
+        .overlay.ending-overlay {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .result-box {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 90%;
+            width: 350px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ending-box {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .result-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .result-text {
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 18px;
+            color: #666;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            background: #8B7355;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: bold;
+        }
+
+        .btn-green {
+            background: #4CAF50;
+        }
+
+        .warning {
+            background: rgba(255, 107, 107, 0.8);
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .level-up-effect {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: #FFD700;
+            z-index: 2000;
+            animation: levelUp 1s ease-out forwards;
+            pointer-events: none;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        @keyframes levelUp {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="character-display">
+            <div id="start-screen">
+                <h1>💪 근육 키우기 게임</h1>
+                <p>윤재가 건강한 보디빌더가 되도록 도와주세요!</p>
+                <button class="start-btn" onclick="startGame()">게임 시작하기</button>
+            </div>
+            
+            <div id="level-display">LV.1 윤재</div>
+            <div id="scenario-box">
+                <div id="scenario-text">게임을 시작합니다...</div>
+                <div class="choice-buttons" id="choices"></div>
+            </div>
+            <div id="stats-bar">
+                <div class="stat-item">
+                    <div class="stat-label">근육량</div>
+                    <div class="stat-value"><span id="muscle">20</span>kg</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="muscle-bar"></div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">체지방률</div>
+                    <div class="stat-value"><span id="fat">33</span>%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill danger" id="fat-bar"></div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">의욕</div>
+                    <div class="stat-value"><span id="motivation">50</span></div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="motivation-bar"></div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">무기력</div>
+                    <div class="stat-value"><span id="lethargy">0</span></div>
+                    <div class="progress-bar">
+                        <div class="progress-fill danger" id="lethargy-bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="result-overlay">
+        <div class="result-box">
+            <h2 class="result-title" id="result-title">결과</h2>
+            <p class="result-text" id="result-text">텍스트</p>
+            <button class="btn" onclick="hideResult()">계속하기</button>
+        </div>
+    </div>
+
+    <div class="overlay ending-overlay" id="ending-overlay">
+        <div class="result-box ending-box">
+            <h2 class="result-title" id="ending-title">엔딩</h2>
+            <p class="result-text" id="ending-text">텍스트</p>
+            <button class="btn btn-green" onclick="location.reload()">다시 시작</button>
+        </div>
+    </div>
+
+    <script>
+const gameState = {
+    level: 1,
+    muscle: 20,
+    fat: 33,
+    motivation: 50,
+    lethargy: 0,
+    currentScenario: 0,
+    specialPath: null,
+    specialStep: 0,
+    goodChoices: 0,
+    lastSpecialChoice: null,
+    surgeryEventShown: false,
+    drugEventShown: false
+};
+
+const characterImages = {
+    1: 'https://i.imgur.com/rHDox3L.png',
+    7: 'https://i.imgur.com/wPCS6fA.png',
+    13: 'https://i.imgur.com/yea3RHW.png',
+    18: 'https://i.imgur.com/bA6xX7Q.jpeg'
+};
+
+const scenarios = [
+    {
+        text: "밤 10시, 오늘 운동을 빼먹었다는 걸 깨달았어요. 피곤하지만 헬스장은 아직 열려있어요.",
+        choices: [
+            { text: "피곤해도 운동하러 가기", muscle: 0.8, fat: -0.8, motivation: 15, lethargy: -1, good: true },
+            { text: "오늘은 쉬고 내일 더 열심히", muscle: -0.3, fat: 0.4, motivation: -5, lethargy: 2, bad: true },
+            { text: "집에서 홈트레이닝하기", muscle: 0.5, fat: -0.4, motivation: 8, lethargy: 0 }
+        ]
+    },
+    {
+        text: "친구들이 치킨과 맥주 파티를 하자고 해요. 하지만 다이어트 중이에요.",
+        choices: [
+            { text: "닭가슴살 도시락 싸가기", muscle: 0.7, fat: -0.9, motivation: 10, lethargy: -1, good: true },
+            { text: "한 번쯤은 괜찮아! 즐기기", muscle: -0.5, fat: 1.2, motivation: -15, lethargy: 3, bad: true },
+            { text: "소량만 먹고 운동으로 보충", muscle: 0.2, fat: 0.3, motivation: 0, lethargy: 1 }
+        ]
+    },
+    {
+        text: "새벽 5시 알람이 울려요. 오늘은 하체 운동하는 날이에요.",
+        choices: [
+            { text: "바로 일어나서 운동 준비", muscle: 1.0, fat: -1.0, motivation: 20, lethargy: -2, good: true },
+            { text: "30분만 더 자고 일어나기", muscle: 0.4, fat: -0.4, motivation: 5, lethargy: 1 },
+            { text: "오늘은 건너뛰고 더 자기", muscle: -0.6, fat: 0.6, motivation: -20, lethargy: 4, bad: true }
+        ]
+    },
+    {
+        text: "PT 트레이너가 식단을 더 엄격하게 지키라고 해요. 하지만 너무 힘들어요.",
+        choices: [
+            { text: "완벽하게 지키기로 결심", muscle: 1.2, fat: -1.2, motivation: 15, lethargy: -1, good: true },
+            { text: "80% 정도만 지키기", muscle: 0.6, fat: -0.6, motivation: 8, lethargy: 0 },
+            { text: "너무 스트레스 받아서 포기", muscle: -0.8, fat: 1.0, motivation: -25, lethargy: 5, bad: true }
+        ]
+    },
+    {
+        text: "가슴 운동하는 날, 벤치프레스를 하다가 바벨에 깔렸어요! 다들 쳐다보고 있어요.",
+        choices: [
+            { text: "털고 일어나서 운동 계속하기", muscle: 1.0, fat: -0.7, motivation: 20, lethargy: -2, good: true },
+            { text: "부끄러워서 집으로 도망치기", muscle: -0.5, fat: 0.2, motivation: -30, lethargy: 4, bad: true },
+            { text: "안 깔린 척 바닥에 누워 자는 척하기", muscle: 0, fat: 0.5, motivation: -15, lethargy: 3 }
+        ]
+    },
+    {
+        text: "오늘 아침 거울을 봤는데 눈바디가 마음에 안 들어요. 살이 찐 것 같아요.",
+        choices: [
+            { text: "하루종일 열심히 식단하고 움직이기", muscle: 0.9, fat: -1.0, motivation: 15, lethargy: -1, good: true },
+            { text: "에라 모르겠다! 오늘은 치팅 데이", muscle: -0.4, fat: 1.5, motivation: -20, lethargy: 4, bad: true },
+            { text: "일단 각도 맞춰서 인스타용 사진 찍기", muscle: 0.1, fat: 0.2, motivation: 5, lethargy: 1 }
+        ]
+    },
+    {
+        text: "새벽 2시, 넷플릭스 시리즈가 너무 재밌어요! 내일 아침 운동이 있는데...",
+        choices: [
+            { text: "바로 끄고 자서 충분한 수면 취하기", muscle: 0.7, fat: -0.6, motivation: 15, lethargy: -2, good: true },
+            { text: "시리즈 정주행하며 밤새기", muscle: -0.6, fat: 0.8, motivation: -25, lethargy: 5, bad: true },
+            { text: "한 편만 더 보고 자기", muscle: 0.2, fat: 0.1, motivation: -5, lethargy: 2 }
+        ]
+    },
+    {
+        text: "보충제를 사야 할 시기가 왔어요. 근육 성장에 도움이 될까요?",
+        choices: [
+            { text: "품질 좋은 프로틴 파우더 구매하기", muscle: 1.1, fat: -0.5, motivation: 15, lethargy: -1, good: true },
+            { text: "단백질 챙겨먹기 너무 귀찮아", muscle: -0.7, fat: 0.6, motivation: -20, lethargy: 3, bad: true },
+            { text: "일단 자연식으로 단백질 섭취하기", muscle: 0.5, fat: -0.2, motivation: 8, lethargy: 0 }
+        ]
+    },
+    {
+        text: "콜록콜록... 오늘은 컨디션이 별로예요. 목도 아프고 몸도 무거워요.",
+        choices: [
+            { text: "평소처럼 고강도로 밀어붙이기", muscle: -0.3, fat: 0.2, motivation: -10, lethargy: 4, bad: true },
+            { text: "컨디션에 맞춰 가벼운 운동하기", muscle: 0.4, fat: -0.3, motivation: 10, lethargy: -1, good: true },
+            { text: "운동 대신 거울 앞에서 포즈만 취하기", muscle: 0, fat: 0.4, motivation: -5, lethargy: 2 }
+        ]
+    }
+];
+
+const specialScenarios = {
+    surgery: {
+        step1: {
+            text: "인스타그램에서 성형으로 완벽한 몸매를 만든 인플루언서를 봤어요.",
+            warning: true,
+            choices: [
+                { text: "성형수술로 빠른 결과 얻기 💀", special: 'surgery', muscle: 3, fat: -6, motivation: 40, lethargy: -5 },
+                { text: "자연스럽게 운동으로 만들기", muscle: 0.8, fat: -0.8, motivation: 15, lethargy: -1, good: true },
+                { text: "더 자세히 알아보기", muscle: 0, fat: 0, motivation: 5, lethargy: 0 }
+            ]
+        },
+        step2: {
+            text: "수술은 성공적이었어요! 인스타그램 팔로워가 10만명이 넘었어요. 하지만 가슴이 이상하게 아파요...",
+            choices: [
+                { text: "병원에 가서 검사받기", result: 'late' },
+                { text: "진통제 먹고 참기", result: 'worse' }
+            ]
+        },
+        step3_late: {
+            text: "의사가 심각한 표정으로 말해요. '보형물에 문제가 생겼어요. 즉시 제거 수술이 필요합니다.'",
+            choices: [
+                { text: "빚을 내서라도 수술받기", result: 'poor_end' }
+            ]
+        },
+        step3_worse: {
+            text: "고통이 점점 심해져요. 보형물이 터진 것 같아요. 응급실로 실려갔지만...",
+            choices: []
+        }
+    },
+    drug: {
+        step1: {
+            text: "헬스장에서 만난 선배가 약물을 권해요. '이거 먹으면 3개월 안에 대회 나갈 수 있어.'",
+            warning: true,
+            choices: [
+                { text: "약물로 빠른 근육 증가 💀", special: 'drug', muscle: 6, fat: -10, motivation: 60, lethargy: -8 },
+                { text: "자연적인 방법 고수하기", muscle: 1.0, fat: -0.8, motivation: 15, lethargy: -1, good: true },
+                { text: "부작용에 대해 물어보기", muscle: 0, fat: 0, motivation: 5, lethargy: 0 }
+            ]
+        },
+        step2: {
+            text: "보디빌딩 대회에서 우승했어요! 하지만 최근 심장이 이상하게 뛰고, 머리카락이 빠지기 시작했어요...",
+            choices: [
+                { text: "약물 중단하고 병원 가기", result: 'late' },
+                { text: "조금만 더 사용하기", result: 'worse' }
+            ]
+        },
+        step3_late: {
+            text: "의사의 진단이 충격적이에요. '간과 신장이 심각하게 손상됐습니다.'",
+            choices: [
+                { text: "치료에 전념하기", result: 'sick_end' }
+            ]
+        },
+        step3_worse: {
+            text: "몸이 급격히 무너지기 시작했어요. 근육은 녹아내리고, 장기들이 하나둘 기능을 멈춰가요...",
+            choices: []
+        }
+    }
+};
+
+function shuffleChoices(choices) {
+    const shuffled = [...choices];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
+function startGame() {
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('level-display').style.display = 'block';
+    document.getElementById('scenario-box').style.display = 'block';
+    document.getElementById('stats-bar').style.display = 'grid';
+    updateStats();
+    showScenario();
+}
+
+function updateCharacterImage() {
+    const display = document.getElementById('character-display');
+    let imageUrl;
+    
+    if (gameState.level >= 18) imageUrl = characterImages[18];
+    else if (gameState.level >= 13) imageUrl = characterImages[13];
+    else if (gameState.level >= 7) imageUrl = characterImages[7];
+    else imageUrl = characterImages[1];
+    
+    display.style.backgroundImage = `url('${imageUrl}')`;
+}
+
+function showLevelUpEffect() {
+    const effect = document.createElement('div');
+    effect.className = 'level-up-effect';
+    effect.textContent = 'LEVEL UP!';
+    document.body.appendChild(effect);
+    
+    setTimeout(() => {
+        effect.remove();
+    }, 1000);
+}
+
+function updateStats() {
+    document.getElementById('muscle').textContent = gameState.muscle.toFixed(1);
+    document.getElementById('fat').textContent = gameState.fat.toFixed(1);
+    document.getElementById('motivation').textContent = Math.round(gameState.motivation);
+    document.getElementById('lethargy').textContent = Math.round(gameState.lethargy);
+
+    document.getElementById('muscle-bar').style.width = (gameState.muscle / 38 * 100) + '%';
+    document.getElementById('fat-bar').style.width = (gameState.fat / 33 * 100) + '%';
+    document.getElementById('motivation-bar').style.width = gameState.motivation + '%';
+    document.getElementById('lethargy-bar').style.width = (gameState.lethargy * 10) + '%';
+    
+    const oldLevel = gameState.level;
+    
+    if (gameState.goodChoices > 0) {
+        gameState.level = Math.min(22, gameState.level + 1);
+        gameState.goodChoices = 0;
+        
+        if (gameState.level > oldLevel) {
+            showLevelUpEffect();
+        }
+    }
+    
+    document.getElementById('level-display').textContent = 'LV.' + gameState.level + ' 윤재';
+    updateCharacterImage();
+}
+
+function showScenario() {
+    if (gameState.lethargy >= 10) {
+        showEnding('무기력 엔딩 😔', '무기력에 빠져 보디빌딩을 포기했어요.');
+        return;
+    }
+    if (gameState.motivation <= 0) {
+        showEnding('포기 엔딩 😢', '의욕을 완전히 잃어버렸어요.');
+        return;
+    }
+    if (gameState.level >= 18) {
+        showEnding('보디빌더 성공! 🏆', '윤재는 건강한 방법으로 완벽한 몸을 만들었어요!');
+        return;
+    }
+
+    let scenario;
+    
+    if (gameState.specialPath) {
+        if (gameState.specialPath === 'surgery') {
+            if (gameState.specialStep === 1) {
+                scenario = specialScenarios.surgery.step2;
+            } else if (gameState.specialStep === 2) {
+                scenario = gameState.lastSpecialChoice === 'late' 
+                    ? specialScenarios.surgery.step3_late 
+                    : specialScenarios.surgery.step3_worse;
+            }
+        } else if (gameState.specialPath === 'drug') {
+            if (gameState.specialStep === 1) {
+                scenario = specialScenarios.drug.step2;
+            } else if (gameState.specialStep === 2) {
+                scenario = gameState.lastSpecialChoice === 'late' 
+                    ? specialScenarios.drug.step3_late 
+                    : specialScenarios.drug.step3_worse;
+            }
+        }
+        gameState.specialStep++;
+    } else {
+        if (gameState.level === 7 && Math.random() > 0.5) {
+            scenario = specialScenarios.surgery.step1;
+        } else if (gameState.level === 18 && Math.random() > 0.5) {
+            scenario = specialScenarios.drug.step1;
+        } else {
+            scenario = scenarios[gameState.currentScenario];
+            gameState.currentScenario = (gameState.currentScenario + 1) % scenarios.length;
+        }
+    }
+
+    const textDiv = document.getElementById('scenario-text');
+    if (scenario.warning) {
+        textDiv.innerHTML = '<div class="warning">⚠️ 위험한 선택입니다!</div>' + scenario.text;
+    } else {
+        textDiv.textContent = scenario.text;
+    }
+
+    const choicesDiv = document.getElementById('choices');
+    choicesDiv.innerHTML = '';
+    
+    if (scenario.choices.length === 0) {
+        setTimeout(() => {
+            if (gameState.specialPath === 'surgery') {
+                showEnding('수술 합병증 사망 💀', '보형물 관리를 제대로 하지 못해 패혈증으로 사망했습니다.');
+            } else if (gameState.specialPath === 'drug') {
+                showEnding('약물 부작용 사망 💀', '약물 부작용으로 장기가 망가져 사망했습니다.');
+            }
+        }, 2000);
+        return;
+    }
+    
+    const shuffledChoices = shuffleChoices(scenario.choices);
+    
+    shuffledChoices.forEach(choice => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = choice.text;
+        btn.onclick = () => handleChoice(choice);
+        choicesDiv.appendChild(btn);
+    });
+}
+
+function handleChoice(choice) {
+    if (choice.special) {
+        gameState.specialPath = choice.special;
+        gameState.specialStep = 1;
+    }
+
+    if (choice.result) {
+        gameState.lastSpecialChoice = choice.result;
+        
+        if (choice.result === 'poor_end') {
+            showResult('빚더미', '수술은 성공했지만 거액의 빚을 지게 되었어요...', () => {
+                showEnding('파산 엔딩', '성형수술의 대가로 모든 것을 잃었습니다.');
+            });
+            return;
+        } else if (choice.result === 'sick_end') {
+            showResult('투병 생활', '약물 부작용으로 평생 투병하며 살아가게 되었어요...', () => {
+                showEnding('건강 상실 엔딩', '약물의 대가는 너무 컸습니다.');
+            });
+            return;
+        }
+    }
+
+    if (choice.good) {
+        gameState.goodChoices++;
+    }
+
+    gameState.muscle = Math.max(20, Math.min(38, gameState.muscle + (choice.muscle || 0)));
+    gameState.fat = Math.max(7, Math.min(33, gameState.fat + (choice.fat || 0)));
+    gameState.motivation = Math.max(0, Math.min(100, gameState.motivation + (choice.motivation || 0)));
+    gameState.lethargy = Math.max(0, Math.min(10, gameState.lethargy + (choice.lethargy || 0)));
+
+    updateStats();
+
+    if (gameState.specialPath) {
+        if (choice.special) {
+            showResult('위험한 선택...', '돌이킬 수 없는 길을 선택했습니다.', () => {
+                setTimeout(showScenario, 300);
+            });
+        } else if (choice.result) {
+            setTimeout(showScenario, 500);
+        } else {
+            showResult('결과', '선택의 결과가 나타났습니다.', () => {
+                setTimeout(showScenario, 300);
+            });
+        }
+        return;
+    }
+
+    let title = '결과';
+    let text = '';
+    
+    if (choice.good) {
+        title = '훌륭한 선택! 💪✨';
+        text = '근육이 빠르게 성장하고 있어요! 레벨이 올랐습니다!';
+    } else if (choice.bad) {
+        title = '아쉬운 선택 😔';
+        text = '더 좋은 선택을 할 수 있었어요.';
+    } else {
+        title = '괜찮은 선택 👍';
+        text = '조금씩 발전하고 있어요.';
+    }
+
+    showResult(title, text);
+}
+
+function showResult(title, text, callback) {
+    document.getElementById('result-title').textContent = title;
+    document.getElementById('result-text').textContent = text;
+    document.getElementById('result-overlay').classList.add('show');
+    
+    window.resultCallback = callback;
+}
+
+function hideResult() {
+    document.getElementById('result-overlay').classList.remove('show');
+    if (window.resultCallback) {
+        window.resultCallback();
+        window.resultCallback = null;
+    } else if (!gameState.specialPath) {
+        setTimeout(showScenario, 300);
+    }
+}
+
+function showEnding(title, text) {
+    document.getElementById('ending-title').textContent = title;
+    document.getElementById('ending-text').textContent = text;
+    
+    const endingOverlay = document.getElementById('ending-overlay');
+    
+    // 특별 엔딩 배경 이미지 설정 - 전체 화면에 표시
+    if (title.includes('수술') || title.includes('성형') || title.includes('파산')) {
+        // 수술 관련 엔딩
+        endingOverlay.style.backgroundImage = `url('https://i.imgur.com/sKpOMgJ.png')`;
+    } else if (title.includes('약물') || title.includes('건강 상실')) {
+        // 약물 관련 엔딩
+        endingOverlay.style.backgroundImage = `url('https://i.imgur.com/9M8uEKl.jpeg')`;
+    } else if (title.includes('성공')) {
+        // 성공 엔딩
+        endingOverlay.style.backgroundImage = `url('${characterImages[18]}')`;
+    } else {
+        // 일반 엔딩 - 검은 배경
+        endingOverlay.style.backgroundImage = 'none';
+        endingOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    }
+    
+    endingOverlay.classList.add('show');
+}
+    </script>
+</body>
+</html>
